@@ -2,7 +2,7 @@
 // 앱 파일을 캐싱해 오프라인에서도 작동하게 함.
 // 앱을 수정하면 아래 CACHE_VERSION 숫자를 올려야 변경분이 반영됨.
 
-const CACHE_VERSION = 'workout-log-v2';
+const CACHE_VERSION = 'workout-log-v3';
 const ASSETS = [
   './',
   './index.html',
