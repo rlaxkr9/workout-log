@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2563eb">
+<title>운동 기록 일지</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --accent-light: #dbeafe;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+    padding-bottom: 88px; /* 하단 탭바 공간 */
+  }
+  .container { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+
+  /* 하단 고정 탭바 */
+  .tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    background: white;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 8px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .tab-btn .icon { font-size: 1.15rem; }
+  .tab-btn.active { color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; margin-top: 10px; }
+  label:first-child { margin-top: 0; }
+  input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem; /* iOS 자동 줌 방지를 위해 16px 이상 */
+    background: #fafafa;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 50px; }
+
+  .row { display: flex; gap: 8px; }
+  .row > div { flex: 1; }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 14px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    font-size: 1rem;
+  }
+  .btn-primary:active { background: var(--accent-dark); }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .btn-secondary {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text);
+    flex: 1;
+    font-size: 0.8rem;
+  }
+  .btn-secondary:active { background: #f0f0f0; }
+
+  /* 직전 기록 안내 */
+  .last-record {
+    margin-top: 8px;
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: var(--accent-dark);
+    display: none;
+  }
+  .last-record.show { display: block; }
+  .last-record .lr-title { font-weight: 700; margin-bottom: 4px; }
+  .last-record .lr-fill {
+    margin-top: 8px;
+    background: var(--accent);
+    color: white;
+    border-radius: 6px;
+    padding: 8px;
+    width: 100%;
+    font-size: 0.82rem;
+  }
+
+  /* 세트 입력 행 */
+  .set-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .set-input-row .set-num {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .set-input-row input { padding: 10px; }
+  .set-input-row .unit { font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+  .set-input-row .remove-set {
+    background: none;
+    color: var(--danger);
+    padding: 4px 6px;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .add-set-btn {
+    background: white;
+    border: 1px dashed var(--border);
+    color: var(--accent);
+    width: 100%;
+    padding: 10px;
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+
+  .day-group { margin-bottom: 18px; }
+  .day-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: var(--accent-dark);
+    display: flex;
+    justify-content: space-between;
+  }
+  .day-header span.count { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
+
+  .entry {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .entry-title { font-weight: 600; font-size: 0.95rem; }
+  .entry-sub { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+  .entry-sets {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .set-chip {
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+  .set-chip .sc-num { color: var(--muted); margin-right: 4px; }
+  .entry-memo { color: var(--text); font-size: 0.8rem; margin-top: 8px; white-space: pre-wrap; }
+  .entry-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn {
+    background: none;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+  .edit-btn { color: var(--accent); }
+  .edit-btn:active { background: var(--accent-light); }
+  .delete-btn { color: var(--danger); }
+  .delete-btn:active { background: #fee2e2; }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 30px 10px;
+    font-size: 0.9rem;
+  }
+
+  #fileInput { display: none; }
+
+  /* 종목 관리 */
+  .exercise-chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .exercise-chip {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .exercise-chip button {
+    background: none; border: none; color: var(--accent-dark);
+    font-size: 0.85rem; padding: 0; line-height: 1; opacity: 0.6;
+  }
+  .exercise-chip button:active { opacity: 1; }
+  .category-group { margin-bottom: 14px; }
+  .category-title { font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+
+  /* 통계 */
+  .stat-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: white; border-radius: 10px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-box .value { font-size: 1.2rem; font-weight: 800; color: var(--accent-dark); }
+  .stat-box .label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+  .chart-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; }
+  .chart-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bar-label { width: 70px; font-size: 0.75rem; color: var(--muted); flex-shrink: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; background: #eef0f3; border-radius: 6px; height: 18px; overflow: hidden; }
+  .bar-fill { background: var(--accent); height: 100%; border-radius: 6px; }
+  .bar-value { width: 46px; font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  svg.linechart { width: 100%; height: auto; display: block; }
+
+  /* 수정 모달 */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    width: 100%;
+    max-width: 640px;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0));
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 12px; font-size: 1.05rem; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-actions button { flex: 1; padding: 13px; }
+  .btn-cancel { background: #f0f0f0; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🏋️ 운동 기록 일지</h1>
+  <div class="subtitle">브라우저에 자동 저장됩니다 (이 기기/이 브라우저 전용)</div>
+
+  <!-- 기록 탭 -->
+  <div class="tab-panel active" id="panel-log">
+    <div class="card">
+      <label for="exDate">날짜</label>
+      <input type="date" id="exDate">
+
+      <label for="exNameSelect">운동 종목</label>
+      <select id="exNameSelect">
+        <option value="">종목을 선택하세요</option>
+      </select>
+
+      <div class="last-record" id="lastRecord"></div>
+
+      <label style="margin-top:14px;">세트별 기록</label>
+      <div id="setInputs"></div>
+      <button class="add-set-btn" id="addSetBtn">+ 세트 추가</button>
+
+      <label for="exMemo">메모 (선택)</label>
+      <textarea id="exMemo" placeholder="컨디션, 느낀 점 등"></textarea>
+
+      <button class="btn-primary" id="addBtn">+ 기록 추가</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn-secondary" id="exportBtn">⬇ 내보내기</button>
+      <button class="btn-secondary" id="importBtn">⬆ 가져오기</button>
+      <input type="file" id="fileInput" accept="application/json">
+    </div>
+
+    <div id="log"></div>
+  </div>
+
+  <!-- 통계 탭 -->
+  <div class="tab-panel" id="panel-stats">
+    <div class="stat-summary" id="statSummary"></div>
+    <div class="card">
+      <div class="chart-title">📅 최근 8주 운동 횟수</div>
+      <div class="chart-sub">주별 총 기록 수</div>
+      <div id="weeklyChart"></div>
+    </div>
+    <div class="card">
+      <div class="chart-title">🏆 종목별 운동 빈도</div>
+      <div class="chart-sub">전체 기간 기준, 상위 항목</div>
+      <div id="freqChart"></div>
+    </div>
+    <div class="card">
+      <div class="filter-row"><select id="progressSelect"></select></div>
+      <div class="chart-title">📈 무게 변화 추이</div>
+      <div class="chart-sub">선택한 종목의 일별 최고 무게</div>
+      <div id="progressChart"></div>
+    </div>
+  </div>
+
+  <!-- 종목 관리 탭 -->
+  <div class="tab-panel" id="panel-manage">
+    <div class="card">
+      <label for="newExName">새 종목 이름</label>
+      <div class="row">
+        <div style="flex: 2;">
+          <input type="text" id="newExName" placeholder="예: 데드리프트">
+        </div>
+        <div style="flex: 1;">
+          <select id="newExCategory">
+            <option value="가슴">가슴</option>
+            <option value="등">등</option>
+            <option value="어깨">어깨</option>
+            <option value="하체">하체</option>
+            <option value="팔">팔</option>
+            <option value="복근">복근</option>
+            <option value="유산소">유산소</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" id="addExerciseBtn">+ 종목 추가</button>
+    </div>
+    <div class="card">
+      <div class="chart-title" style="margin-bottom: 12px;">등록된 종목 목록</div>
+      <div id="exerciseManageList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 하단 탭바 -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="log"><span class="icon">📝</span>기록</button>
+  <button class="tab-btn" data-tab="stats"><span class="icon">📊</span>통계</button>
+  <button class="tab-btn" data-tab="manage"><span class="icon">⚙️</span>종목</button>
+</div>
+
+<!-- 수정 모달 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>기록 수정</h3>
+    <label for="editDate">날짜</label>
+    <input type="date" id="editDate">
+    <label for="editName">운동 종목</label>
+    <select id="editName"></select>
+    <label style="margin-top:14px;">세트별 기록</label>
+    <div id="editSetInputs"></div>
+    <button class="add-set-btn" id="editAddSetBtn">+ 세트 추가</button>
+    <label for="editMemo">메모</label>
+    <textarea id="editMemo"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="editCancelBtn">취소</button>
+      <button class="btn-primary" style="margin-top:0;" id="editSaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'workoutLogEntries';
+const EXERCISES_KEY = 'workoutLogExercises';
+
+const DEFAULT_EXERCISES = [
+  { id: 'ex-bench', name: '벤치프레스', category: '가슴' },
+  { id: 'ex-incline', name: '인클라인 벤치프레스', category: '가슴' },
+  { id: 'ex-pushup', name: '푸시업', category: '가슴' },
+  { id: 'ex-pullup', name: '풀업', category: '등' },
+  { id: 'ex-deadlift', name: '데드리프트', category: '등' },
+  { id: 'ex-row', name: '바벨로우', category: '등' },
+  { id: 'ex-press', name: '오버헤드프레스', category: '어깨' },
+  { id: 'ex-lateral', name: '사이드 레터럴 레이즈', category: '어깨' },
+  { id: 'ex-squat', name: '스쿼트', category: '하체' },
+  { id: 'ex-legpress', name: '레그프레스', category: '하체' },
+  { id: 'ex-lunge', name: '런지', category: '하체' },
+  { id: 'ex-curl', name: '바벨컬', category: '팔' },
+  { id: 'ex-tricep', name: '트라이셉스 익스텐션', category: '팔' },
+  { id: 'ex-plank', name: '플랭크', category: '복근' },
+  { id: 'ex-crunch', name: '크런치', category: '복근' },
+  { id: 'ex-run', name: '러닝', category: '유산소' },
+  { id: 'ex-bike', name: '사이클', category: '유산소' },
+];
+
+function loadEntries() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return parsed.map(migrateEntry);
+  } catch (e) {
+    console.error('불러오기 실패', e);
+    return [];
+  }
+}
+
+// 구버전(sets:숫자, reps, weight) → 신버전(sets:배열) 자동 변환
+function migrateEntry(e) {
+  if (Array.isArray(e.sets)) return e; // 이미 신버전
+  const setCount = (typeof e.sets === 'number' && e.sets > 0) ? e.sets : 1;
+  const setsArr = [];
+  for (let i = 0; i < setCount; i++) {
+    setsArr.push({ weight: e.weight ?? null, reps: e.reps ?? null });
+  }
+  return {
+    id: e.id,
+    date: e.date,
+    name: e.name,
+    sets: setsArr,
+    memo: e.memo || '',
+    createdAt: e.createdAt || Date.now()
+  };
+}
+
+function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function loadExercises() {
+  try {
+    const raw = localStorage.getItem(EXERCISES_KEY);
+    if (raw) return JSON.parse(raw);
+    saveExercises(DEFAULT_EXERCISES);
+    return DEFAULT_EXERCISES;
+  } catch (e) {
+    return DEFAULT_EXERCISES;
+  }
+}
+function saveExercises(list) {
+  localStorage.setItem(EXERCISES_KEY, JSON.stringify(list));
+}
+
+let entries = loadEntries();
+let exercises = loadExercises();
+
+/* ---------------- 탭 전환 ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    window.scrollTo(0, 0);
+    if (btn.dataset.tab === 'stats') renderStats();
+    if (btn.dataset.tab === 'manage') renderExerciseManageList();
+  });
+});
+
+/* ---------------- 기록 탭 ---------------- */
+const exDate = document.getElementById('exDate');
+const exNameSelect = document.getElementById('exNameSelect');
+const exMemo = document.getElementById('exMemo');
+const setInputs = document.getElementById('setInputs');
+const lastRecord = document.getElementById('lastRecord');
+const log = document.getElementById('log');
+
+exDate.value = new Date().toISOString().slice(0, 10);
+
+function populateExerciseSelect(selectEl, includeEmpty) {
+  const grouped = {};
+  exercises.forEach(ex => {
+    if (!grouped[ex.category]) grouped[ex.category] = [];
+    grouped[ex.category].push(ex);
+  });
+  selectEl.innerHTML = '';
+  if (includeEmpty) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '종목을 선택하세요';
+    selectEl.appendChild(opt);
+  }
+  Object.keys(grouped).forEach(cat => {
+    const group = document.createElement('optgroup');
+    group.label = cat;
+    grouped[cat].forEach(ex => {
+      const opt = document.createElement('option');
+      opt.value = ex.name; opt.textContent = ex.name;
+      group.appendChild(opt);
+    });
+    selectEl.appendChild(group);
+  });
+}
+populateExerciseSelect(exNameSelect, true);
+
+/* 세트 입력 행 생성 */
+function createSetRow(container, weight = '', reps = '') {
+  const row = document.createElement('div');
+  row.className = 'set-input-row';
+  row.innerHTML = `
+    <div class="set-num"></div>
+    <input type="number" class="set-weight" inputmode="decimal" min="0" step="0.5" placeholder="무게" value="${weight}">
+    <span class="unit">kg</span>
+    <input type="number" class="set-reps" inputmode="numeric" min="0" placeholder="횟수" value="${reps}">
+    <span class="unit">회</span>
+    <button class="remove-set" type="button">✕</button>
+  `;
+  row.querySelector('.remove-set').addEventListener('click', () => {
+    row.remove();
+    renumberSets(container);
+  });
+  container.appendChild(row);
+  renumberSets(container);
+}
+
+function renumberSets(container) {
+  container.querySelectorAll('.set-input-row').forEach((row, i) => {
+    row.querySelector('.set-num').textContent = i + 1;
+  });
+}
+
+function getSetsFromInputs(container) {
+  const sets = [];
+  container.querySelectorAll('.set-input-row').forEach(row => {
+    const w = row.querySelector('.set-weight').value;
+    const r = row.querySelector('.set-reps').value;
+    if (w || r) {
+      sets.push({ weight: w ? Number(w) : null, reps: r ? Number(r) : null });
+    }
+  });
+  return sets;
+}
+
+// 초기 세트 1행
+createSetRow(setInputs);
+
+document.getElementById('addSetBtn').addEventListener('click', () => createSetRow(setInputs));
+
+/* 종목 선택 시 직전 기록 표시 */
+exNameSelect.addEventListener('change', () => {
+  const name = exNameSelect.value;
+  if (!name) { lastRecord.classList.remove('show'); return; }
+
+  const past = entries
+    .filter(e => e.name === name)
+    .sort((a, b) => (b.date.localeCompare(a.date)) || (b.createdAt - a.createdAt));
+
+  if (past.length === 0) {
+    lastRecord.classList.remove('show');
+    return;
+  }
+
+  const last = past[0];
+  const setsText = last.sets.map((s, i) =>
+    `${i+1}세트 ${s.weight ?? '-'}kg × ${s.reps ?? '-'}회`
+  ).join(', ');
+
+  lastRecord.innerHTML = `
+    <div class="lr-title">📌 직전 기록 (${formatDate(last.date)})</div>
+    <div>${escapeHtml(setsText)}</div>
+    <button class="lr-fill" type="button">↩ 이 기록 그대로 불러오기</button>
+  `;
+  lastRecord.classList.add('show');
+
+  lastRecord.querySelector('.lr-fill').addEventListener('click', () => {
+    setInputs.innerHTML = '';
+    last.sets.forEach(s => createSetRow(setInputs, s.weight ?? '', s.reps ?? ''));
+    if (last.sets.length === 0) createSetRow(setInputs);
+  });
+});
+
+function render() {
+  log.innerHTML = '';
+  if (entries.length === 0) {
+    log.innerHTML = '<div class="empty">아직 기록이 없습니다. 위에서 첫 운동을 추가해보세요!</div>';
+    return;
+  }
+
+  const grouped = {};
+  entries.forEach(e => {
+    if (!grouped[e.date]) grouped[e.date] = [];
+    grouped[e.date].push(e);
+  });
+  const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+  dates.forEach(date => {
+    const dayEntries = grouped[date].sort((a, b) => b.createdAt - a.createdAt);
+    const group = document.createElement('div');
+    group.className = 'day-group';
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    header.innerHTML = `<span>${formatDate(date)}</span><span class="count">${dayEntries.length}개 기록</span>`;
+    group.appendChild(header);
+
+    dayEntries.forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'entry';
+
+      const totalVol = entry.sets.reduce((s, set) =>
+        s + ((set.weight && set.reps) ? set.weight * set.reps : 0), 0);
+      const subParts = [`${entry.sets.length}세트`];
+      if (totalVol > 0) subParts.push(`볼륨 ${totalVol.toLocaleString()}kg`);
+
+      const setChips = entry.sets.map((s, i) =>
+        `<div class="set-chip"><span class="sc-num">${i+1}</span>${s.weight ?? '-'}kg × ${s.reps ?? '-'}회</div>`
+      ).join('');
+
+      div.innerHTML = `
+        <div class="entry-head">
+          <div>
+            <div class="entry-title">${escapeHtml(entry.name)}</div>
+            <div class="entry-sub">${subParts.join(' · ')}</div>
+          </div>
+          <div class="entry-actions">
+            <button class="icon-btn edit-btn" data-id="${entry.id}">수정</button>
+            <button class="icon-btn delete-btn" data-id="${entry.id}">삭제</button>
+          </div>
+        </div>
+        <div class="entry-sets">${setChips}</div>
+        ${entry.memo ? `<div class="entry-memo">${escapeHtml(entry.memo)}</div>` : ''}
+      `;
+      group.appendChild(div);
+    });
+    log.appendChild(group);
+  });
+
+  log.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('이 기록을 삭제할까요?')) return;
+      const id = btn.getAttribute('data-id');
+      entries = entries.filter(e => String(e.id) !== id);
+      saveEntries(entries);
+      render();
+    });
+  });
+
+  log.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(btn.getAttribute('data-id')));
+  });
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+}
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  const name = exNameSelect.value;
+  if (!name) {
+    alert('운동 종목을 선택해주세요. (없으면 "종목" 탭에서 먼저 추가)');
+    exNameSelect.focus();
+    return;
+  }
+  if (!exDate.value) { alert('날짜를 선택해주세요.'); return; }
+
+  const sets = getSetsFromInputs(setInputs);
+  if (sets.length === 0) {
+    alert('최소 한 세트의 무게 또는 횟수를 입력해주세요.');
+    return;
+  }
+
+  entries.push({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    date: exDate.value,
+    name,
+    sets,
+    memo: exMemo.value.trim(),
+    createdAt: Date.now()
+  });
+  saveEntries(entries);
+  render();
+
+  // 입력 초기화 (날짜/종목 유지, 세트는 1행으로)
+  setInputs.innerHTML = '';
+  createSetRow(setInputs);
+  exMemo.value = '';
+  window.scrollTo(0, 0);
+});
+
+/* ---------------- 수정 모달 ---------------- */
+const editModal = document.getElementById('editModal');
+const editDate = document.getElementById('editDate');
+const editName = document.getElementById('editName');
+const editSetInputs = document.getElementById('editSetInputs');
+const editMemo = document.getElementById('editMemo');
+let editingId = null;
+
+document.getElementById('editAddSetBtn').addEventListener('click', () => createSetRow(editSetInputs));
+document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
+
+function openEditModal(id) {
+  const entry = entries.find(e => String(e.id) === id);
+  if (!entry) return;
+  editingId = id;
+
+  populateExerciseSelect(editName, false);
+  // 등록 목록에 없는 종목명일 경우 임시 옵션 추가
+  if (!exercises.some(ex => ex.name === entry.name)) {
+    const opt = document.createElement('option');
+    opt.value = entry.name; opt.textContent = entry.name + ' (삭제된 종목)';
+    editName.insertBefore(opt, editName.firstChild);
+  }
+  editName.value = entry.name;
+  editDate.value = entry.date;
+  editMemo.value = entry.memo || '';
+
+  editSetInputs.innerHTML = '';
+  entry.sets.forEach(s => createSetRow(editSetInputs, s.weight ?? '', s.reps ?? ''));
+  if (entry.sets.length === 0) createSetRow(editSetInputs);
+
+  editModal.classList.add('show');
+}
+
+function closeEditModal() {
+  editModal.classList.remove('show');
+  editingId = null;
+}
+
+document.getElementById('editSaveBtn').addEventListener('click', () => {
+  const entry = entries.find(e => String(e.id) === editingId);
+  if (!entry) return;
+
+  const sets = getSetsFromInputs(editSetInputs);
+  if (sets.length === 0) { alert('최소 한 세트를 입력해주세요.'); return; }
+  if (!editName.value) { alert('종목을 선택해주세요.'); return; }
+
+  entry.date = editDate.value;
+  entry.name = editName.value;
+  entry.sets = sets;
+  entry.memo = editMemo.value.trim();
+
+  saveEntries(entries);
+  render();
+  closeEditModal();
+});
+
+/* ---------------- 내보내기/가져오기 ---------------- */
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (entries.length === 0) { alert('내보낼 기록이 없습니다.'); return; }
+  const payload = { version: 3, entries, exercises };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `workout-log-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+const fileInput = document.getElementById('fileInput');
+document.getElementById('importBtn').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const imported = JSON.parse(event.target.result);
+      let importedEntries, importedExercises;
+      if (Array.isArray(imported)) {
+        importedEntries = imported; importedExercises = null;
+      } else {
+        importedEntries = imported.entries || [];
+        importedExercises = imported.exercises || null;
+      }
+      importedEntries = importedEntries.map(migrateEntry);
+
+      const merge = confirm('기존 기록과 합치시겠습니까?\n(취소를 누르면 기존 기록을 덮어씁니다)');
+      if (merge) {
+        const existingIds = new Set(entries.map(e => e.id));
+        entries = entries.concat(importedEntries.filter(e => !existingIds.has(e.id)));
+        if (importedExercises) {
+          const existNames = new Set(exercises.map(ex => ex.name));
+          exercises = exercises.concat(importedExercises.filter(ex => !existNames.has(ex.name)));
+        }
+      } else {
+        entries = importedEntries;
+        if (importedExercises) exercises = importedExercises;
+      }
+      saveEntries(entries);
+      saveExercises(exercises);
+      populateExerciseSelect(exNameSelect, true);
+      render();
+      alert('가져오기 완료!');
+    } catch (err) {
+      alert('파일을 읽는 중 오류가 발생했습니다. 올바른 JSON 파일인지 확인해주세요.');
+    }
+  };
+  reader.readAsText(file);
+  fileInput.value = '';
+});
+
+/* ---------------- 종목 관리 ---------------- */
+document.getElementById('addExerciseBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('newExName');
+  const categorySelect = document.getElementById('newExCategory');
+  const name = nameInput.value.trim();
+  if (!name) { alert('종목 이름을 입력해주세요.'); nameInput.focus(); return; }
+  if (exercises.some(ex => ex.name === name)) { alert('이미 등록된 종목입니다.'); return; }
+
+  exercises.push({
+    id: 'ex-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    name, category: categorySelect.value
+  });
+  saveExercises(exercises);
+  populateExerciseSelect(exNameSelect, true);
+  renderExerciseManageList();
+  nameInput.value = '';
+  nameInput.focus();
+});
+
+function renderExerciseManageList() {
+  const container = document.getElementById('exerciseManageList');
+  container.innerHTML = '';
+  if (exercises.length === 0) {
+    container.innerHTML = '<div class="empty">등록된 종목이 없습니다.</div>';
+    return;
+  }
+  const grouped = {};
+  exercises.forEach(ex => {
+    if (!grouped[ex.category]) grouped[ex.category] = [];
+    grouped[ex.category].push(ex);
+  });
+  Object.keys(grouped).forEach(cat => {
+    const catGroup = document.createElement('div');
+    catGroup.className = 'category-group';
+    const title = document.createElement('div');
+    title.className = 'category-title';
+    title.textContent = cat;
+    catGroup.appendChild(title);
+    const chipList = document.createElement('div');
+    chipList.className = 'exercise-chip-list';
+    grouped[cat].forEach(ex => {
+      const chip = document.createElement('div');
+      chip.className = 'exercise-chip';
+      chip.innerHTML = `<span>${escapeHtml(ex.name)}</span><button data-id="${ex.id}">✕</button>`;
+      chipList.appendChild(chip);
+    });
+    catGroup.appendChild(chipList);
+    container.appendChild(catGroup);
+  });
+  container.querySelectorAll('.exercise-chip button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const target = exercises.find(ex => ex.id === id);
+      if (!target) return;
+      const usedCount = entries.filter(e => e.name === target.name).length;
+      const msg = usedCount > 0
+        ? `"${target.name}" 종목을 삭제할까요?\n이미 ${usedCount}개 기록에서 사용 중이지만 기존 기록은 그대로 남습니다.`
+        : `"${target.name}" 종목을 삭제할까요?`;
+      if (!confirm(msg)) return;
+      exercises = exercises.filter(ex => ex.id !== id);
+      saveExercises(exercises);
+      populateExerciseSelect(exNameSelect, true);
+      renderExerciseManageList();
+    });
+  });
+}
+
+/* ---------------- 통계 ---------------- */
+function entryVolume(e) {
+  return e.sets.reduce((s, set) => s + ((set.weight && set.reps) ? set.weight * set.reps : 0), 0);
+}
+
+function renderStats() {
+  renderStatSummary();
+  renderWeeklyChart();
+  renderFreqChart();
+  renderProgressSelectAndChart();
+}
+
+function renderStatSummary() {
+  const container = document.getElementById('statSummary');
+  const totalCount = entries.length;
+  const uniqueDays = new Set(entries.map(e => e.date)).size;
+  const totalVolume = entries.reduce((sum, e) => sum + entryVolume(e), 0);
+  container.innerHTML = `
+    <div class="stat-box"><div class="value">${totalCount}</div><div class="label">총 기록 수</div></div>
+    <div class="stat-box"><div class="value">${uniqueDays}</div><div class="label">운동한 날</div></div>
+    <div class="stat-box"><div class="value">${Math.round(totalVolume).toLocaleString()}</div><div class="label">총 볼륨(kg)</div></div>
+  `;
+}
+
+function getWeekKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diffToMonday);
+  return d.toISOString().slice(0, 10);
+}
+
+function renderWeeklyChart() {
+  const container = document.getElementById('weeklyChart');
+  container.innerHTML = '';
+  if (entries.length === 0) { container.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
+
+  const today = new Date();
+  const weeks = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i * 7);
+    weeks.push(getWeekKey(d.toISOString().slice(0, 10)));
+  }
+  const uniqueWeeks = [...new Set(weeks)];
+  const counts = {};
+  entries.forEach(e => { const wk = getWeekKey(e.date); counts[wk] = (counts[wk] || 0) + 1; });
+  const maxCount = Math.max(1, ...uniqueWeeks.map(w => counts[w] || 0));
+
+  uniqueWeeks.forEach(wk => {
+    const count = counts[wk] || 0;
+    const pct = (count / maxCount) * 100;
+    const d = new Date(wk + 'T00:00:00');
+    const label = `${d.getMonth() + 1}/${d.getDate()}`;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${label}주</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-value">${count}회</div>`;
+    container.appendChild(row);
+  });
+}
+
+function renderFreqChart() {
+  const container = document.getElementById('freqChart');
+  container.innerHTML = '';
+  if (entries.length === 0) { container.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
+  const counts = {};
+  entries.forEach(e => { counts[e.name] = (counts[e.name] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxCount = Math.max(1, ...sorted.map(s => s[1]));
+  sorted.forEach(([name, count]) => {
+    const pct = (count / maxCount) * 100;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-value">${count}회</div>`;
+    container.appendChild(row);
+  });
+}
+
+function renderProgressSelectAndChart() {
+  const select = document.getElementById('progressSelect');
+  const namesWithWeight = [...new Set(
+    entries.filter(e => e.sets.some(s => s.weight)).map(e => e.name)
+  )];
+  const prevValue = select.value;
+  select.innerHTML = '';
+  if (namesWithWeight.length === 0) {
+    select.innerHTML = '<option value="">무게 기록 없음</option>';
+    document.getElementById('progressChart').innerHTML = '<div class="empty">무게가 기록된 운동이 없습니다.</div>';
+    return;
+  }
+  namesWithWeight.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    select.appendChild(opt);
+  });
+  if (namesWithWeight.includes(prevValue)) select.value = prevValue;
+  select.onchange = () => renderProgressChart(select.value);
+  renderProgressChart(select.value);
+}
+
+function renderProgressChart(name) {
+  const container = document.getElementById('progressChart');
+  container.innerHTML = '';
+  if (!name) return;
+
+  const byDate = {};
+  entries.filter(e => e.name === name).forEach(e => {
+    const maxW = Math.max(0, ...e.sets.filter(s => s.weight).map(s => s.weight));
+    if (maxW > 0 && (!byDate[e.date] || byDate[e.date] < maxW)) byDate[e.date] = maxW;
+  });
+
+  const dates = Object.keys(byDate).sort();
+  if (dates.length === 0) { container.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
+  if (dates.length === 1) {
+    container.innerHTML = `<div class="empty">"${escapeHtml(name)}" 기록이 1개뿐이라 추이를 그릴 수 없습니다. (최고 ${byDate[dates[0]]}kg)</div>`;
+    return;
+  }
+
+  const values = dates.map(d => byDate[d]);
+  const maxV = Math.max(...values), minV = Math.min(...values);
+  const range = maxV - minV || 1;
+  const W = 600, H = 200, padL = 40, padR = 16, padT = 16, padB = 28;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const points = dates.map((d, i) => ({
+    x: padL + (i / (dates.length - 1)) * plotW,
+    y: padT + plotH - ((byDate[d] - minV) / range) * plotH,
+    date: d, value: byDate[d]
+  }));
+  const pathD = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  const labelStep = Math.ceil(dates.length / 6);
+
+  let svg = `<svg class="linechart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#e5e7eb" stroke-width="1"/>`;
+  svg += `<line x1="${padL}" y1="${padT+plotH}" x2="${W-padR}" y2="${padT+plotH}" stroke="#e5e7eb" stroke-width="1"/>`;
+  svg += `<text x="4" y="${padT+4}" font-size="10" fill="#6b7280">${maxV}kg</text>`;
+  svg += `<text x="4" y="${padT+plotH}" font-size="10" fill="#6b7280">${minV}kg</text>`;
+  svg += `<path d="${pathD}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
+  points.forEach((p, i) => {
+    svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#1d4ed8"/>`;
+    if (i % labelStep === 0 || i === points.length - 1) {
+      const d = new Date(p.date + 'T00:00:00');
+      svg += `<text x="${p.x.toFixed(1)}" y="${H-8}" font-size="9" fill="#6b7280" text-anchor="middle">${d.getMonth()+1}/${d.getDate()}</text>`;
+    }
+  });
+  svg += `</svg>`;
+  container.innerHTML = svg;
+}
+
+render();
+</script>
+</body>
+</html>
