@@ -116,10 +116,18 @@
     border-radius: 8px;
     font-size: 1rem; /* iOS 자동 줌 방지를 위해 16px 이상 */
     background: var(--input-bg);
+    color: var(--text);
     font-family: inherit;
     -webkit-appearance: none;
     appearance: none;
   }
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+  /* 다크모드 date input 아이콘이 어두워 안 보이는 문제 보정 */
+  html[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+  /* select 옵션 목록 배경/글자도 테마 반영 */
+  select option { background: var(--card-bg); color: var(--text); }
   /* iOS Safari에서 date input이 컨테이너를 넘는 현상 방지 */
   input[type="date"] {
     display: block;
