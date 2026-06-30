@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#2563eb" id="themeColorMeta">
 <title>운동 기록 일지</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="운동 기록">
 <style>
   :root {
     --bg: #f4f5f7;
@@ -16,6 +21,25 @@
     --muted: #6b7280;
     --border: #e5e7eb;
     --danger: #dc2626;
+    --input-bg: #fafafa;
+    --chip-bg: #f1f5f9;
+    --track-bg: #eef0f3;
+    --shadow: rgba(0,0,0,0.06);
+  }
+  html[data-theme="dark"] {
+    --bg: #0f172a;
+    --card-bg: #1e293b;
+    --accent: #3b82f6;
+    --accent-dark: #60a5fa;
+    --accent-light: #1e3a5f;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #334155;
+    --danger: #f87171;
+    --input-bg: #0f172a;
+    --chip-bg: #334155;
+    --track-bg: #334155;
+    --shadow: rgba(0,0,0,0.3);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -27,17 +51,28 @@
     padding-bottom: 88px; /* 하단 탭바 공간 */
   }
   .container { max-width: 640px; margin: 0 auto; }
+  .app-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   h1 { font-size: 1.4rem; margin-bottom: 4px; }
   .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+  .theme-toggle {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 42px; height: 42px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+  .theme-toggle:active { background: var(--chip-bg); }
 
   /* 하단 고정 탭바 */
   .tabs {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     display: flex;
-    background: white;
+    background: var(--card-bg);
     border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 -2px 10px var(--shadow);
     z-index: 50;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
@@ -65,7 +100,7 @@
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px var(--shadow);
   }
 
   label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; margin-top: 10px; }
@@ -76,7 +111,7 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 1rem; /* iOS 자동 줌 방지를 위해 16px 이상 */
-    background: #fafafa;
+    background: var(--input-bg);
     font-family: inherit;
   }
   textarea { resize: vertical; min-height: 50px; }
@@ -104,13 +139,13 @@
 
   .toolbar { display: flex; gap: 8px; margin-bottom: 14px; }
   .btn-secondary {
-    background: white;
+    background: var(--card-bg);
     border: 1px solid var(--border);
     color: var(--text);
     flex: 1;
     font-size: 0.8rem;
   }
-  .btn-secondary:active { background: #f0f0f0; }
+  .btn-secondary:active { background: var(--chip-bg); }
 
   /* 직전 기록 안내 */
   .last-record {
@@ -164,7 +199,7 @@
     flex-shrink: 0;
   }
   .add-set-btn {
-    background: white;
+    background: var(--card-bg);
     border: 1px dashed var(--border);
     color: var(--accent);
     width: 100%;
@@ -206,7 +241,7 @@
     gap: 6px;
   }
   .set-chip {
-    background: #f1f5f9;
+    background: var(--chip-bg);
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 0.78rem;
@@ -223,7 +258,7 @@
   .edit-btn { color: var(--accent); }
   .edit-btn:active { background: var(--accent-light); }
   .delete-btn { color: var(--danger); }
-  .delete-btn:active { background: #fee2e2; }
+  .delete-btn:active { background: var(--accent-light); }
 
   .empty {
     text-align: center;
@@ -257,14 +292,14 @@
 
   /* 통계 */
   .stat-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-  .stat-box { background: white; border-radius: 10px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-box { background: var(--card-bg); border-radius: 10px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 3px var(--shadow); }
   .stat-box .value { font-size: 1.2rem; font-weight: 800; color: var(--accent-dark); }
   .stat-box .label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
   .chart-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; }
   .chart-sub { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
   .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .bar-label { width: 70px; font-size: 0.75rem; color: var(--muted); flex-shrink: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-track { flex: 1; background: #eef0f3; border-radius: 6px; height: 18px; overflow: hidden; }
+  .bar-track { flex: 1; background: var(--track-bg); border-radius: 6px; height: 18px; overflow: hidden; }
   .bar-fill { background: var(--accent); height: 100%; border-radius: 6px; }
   .bar-value { width: 46px; font-size: 0.72rem; color: var(--text); flex-shrink: 0; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
@@ -281,7 +316,7 @@
   }
   .modal-overlay.show { display: flex; }
   .modal {
-    background: white;
+    background: var(--card-bg);
     width: 100%;
     max-width: 640px;
     border-radius: 16px 16px 0 0;
@@ -292,13 +327,18 @@
   .modal h3 { margin: 0 0 12px; font-size: 1.05rem; }
   .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
   .modal-actions button { flex: 1; padding: 13px; }
-  .btn-cancel { background: #f0f0f0; color: var(--text); }
+  .btn-cancel { background: var(--chip-bg); color: var(--text); }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🏋️ 운동 기록 일지</h1>
-  <div class="subtitle">브라우저에 자동 저장됩니다 (이 기기/이 브라우저 전용)</div>
+  <div class="app-header">
+    <div>
+      <h1>🏋️ 운동 기록 일지</h1>
+      <div class="subtitle">브라우저에 자동 저장됩니다 (이 기기/이 브라우저 전용)</div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="다크모드 전환">🌙</button>
+  </div>
 
   <!-- 기록 탭 -->
   <div class="tab-panel active" id="panel-log">
@@ -1034,6 +1074,12 @@ function renderProgressChart(name) {
   const W = 600, H = 200, padL = 40, padR = 16, padT = 16, padB = 28;
   const plotW = W - padL - padR, plotH = H - padT - padB;
 
+  const cs = getComputedStyle(document.documentElement);
+  const cBorder = cs.getPropertyValue('--border').trim() || '#e5e7eb';
+  const cMuted = cs.getPropertyValue('--muted').trim() || '#6b7280';
+  const cAccent = cs.getPropertyValue('--accent').trim() || '#2563eb';
+  const cAccentDark = cs.getPropertyValue('--accent-dark').trim() || '#1d4ed8';
+
   const points = dates.map((d, i) => ({
     x: padL + (i / (dates.length - 1)) * plotW,
     y: padT + plotH - ((byDate[d] - minV) / range) * plotH,
@@ -1043,16 +1089,16 @@ function renderProgressChart(name) {
   const labelStep = Math.ceil(dates.length / 6);
 
   let svg = `<svg class="linechart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#e5e7eb" stroke-width="1"/>`;
-  svg += `<line x1="${padL}" y1="${padT+plotH}" x2="${W-padR}" y2="${padT+plotH}" stroke="#e5e7eb" stroke-width="1"/>`;
-  svg += `<text x="4" y="${padT+4}" font-size="10" fill="#6b7280">${maxV}kg</text>`;
-  svg += `<text x="4" y="${padT+plotH}" font-size="10" fill="#6b7280">${minV}kg</text>`;
-  svg += `<path d="${pathD}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
+  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="${cBorder}" stroke-width="1"/>`;
+  svg += `<line x1="${padL}" y1="${padT+plotH}" x2="${W-padR}" y2="${padT+plotH}" stroke="${cBorder}" stroke-width="1"/>`;
+  svg += `<text x="4" y="${padT+4}" font-size="10" fill="${cMuted}">${maxV}kg</text>`;
+  svg += `<text x="4" y="${padT+plotH}" font-size="10" fill="${cMuted}">${minV}kg</text>`;
+  svg += `<path d="${pathD}" fill="none" stroke="${cAccent}" stroke-width="2.5"/>`;
   points.forEach((p, i) => {
-    svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#1d4ed8"/>`;
+    svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${cAccentDark}"/>`;
     if (i % labelStep === 0 || i === points.length - 1) {
       const d = new Date(p.date + 'T00:00:00');
-      svg += `<text x="${p.x.toFixed(1)}" y="${H-8}" font-size="9" fill="#6b7280" text-anchor="middle">${d.getMonth()+1}/${d.getDate()}</text>`;
+      svg += `<text x="${p.x.toFixed(1)}" y="${H-8}" font-size="9" fill="${cMuted}" text-anchor="middle">${d.getMonth()+1}/${d.getDate()}</text>`;
     }
   });
   svg += `</svg>`;
@@ -1060,6 +1106,60 @@ function renderProgressChart(name) {
 }
 
 render();
+
+/* ---------------- 다크모드 ---------------- */
+const THEME_KEY = 'workoutLogTheme';
+const themeToggle = document.getElementById('themeToggle');
+const themeColorMeta = document.getElementById('themeColorMeta');
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggle.textContent = '☀️';
+    themeColorMeta.setAttribute('content', '#0f172a');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeToggle.textContent = '🌙';
+    themeColorMeta.setAttribute('content', '#2563eb');
+  }
+}
+
+function getInitialTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) return saved;
+  // 저장값 없으면 기기 설정 따라감
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+let currentTheme = getInitialTheme();
+applyTheme(currentTheme);
+
+themeToggle.addEventListener('click', () => {
+  currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, currentTheme);
+  applyTheme(currentTheme);
+  // 통계 탭이 열려있으면 차트 색 갱신
+  if (document.getElementById('panel-stats').classList.contains('active')) {
+    renderStats();
+  }
+});
+
+// 사용자가 수동 설정 안 했을 때만 기기 설정 변화 추종
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (!localStorage.getItem(THEME_KEY)) {
+    currentTheme = e.matches ? 'dark' : 'light';
+    applyTheme(currentTheme);
+  }
+});
+
+/* ---------------- PWA 서비스워커 등록 ---------------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.log('서비스워커 등록 실패:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
